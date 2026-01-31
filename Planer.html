@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moj Planer - Gold Zen Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2d3436; 
+            --accent: #d4af37; /* Zlatna boja koja prati pozadinu */
+            --white: #ffffff;
+            --glass: rgba(255, 255, 255, 0.85);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            /* TVOJA NOVA POZADINA */
+            background: url('https://images.rawpixel.com/image_800/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvcm00ODYtYmctMDEzYy14LmpwZw.jpg') no-repeat center center fixed; 
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary);
+        }
+
+        .dashboard {
+            width: 95%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 25px;
+            padding: 20px;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        h1 { 
+            font-weight: 900; 
+            font-size: 2,2rem; 
+            margin: 0 0 25px 0; 
+            letter-spacing: 1px; 
+            text-transform: uppercase;
+            color: var(--primary);
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+        }
+
+        /* Navigacija */
+        .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .nav-item {
+            background: #ffffff;
+            padding: 20px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid transparent;
+        }
+        .nav-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: var(--accent);
+        }
+
+        /* Kalendar */
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .cal-day {
+            padding: 12px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 400;
+        }
+        .cal-day:hover { background: rgba(212, 175, 55, 0.1); }
+        .cal-day.today { background: var(--primary); color: white; font-weight: 700; }
+        .cal-day.has-event { border-bottom: 3px solid var(--accent); }
+
+        /* Side Drawer */
+        #drawer {
+            position: fixed;
+            right: -100%;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+            padding: 40px;
+            box-shadow: -15px 0 50px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+        #drawer.active { right: 0; }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+        }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 25px; }
+        input { 
+            flex: 1; padding: 15px; border: 2px solid #eee; border-radius: 12px; 
+            font-family: 'Montserrat'; font-weight: 700; outline: none;
+        }
+        .add-btn { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 12px; cursor: pointer; font-size: 20px; }
+        
+        .item-row { 
+            display: flex; align-items: center; gap: 12px; padding: 15px; 
+            background: #fdfcf9; border-radius: 12px; margin-bottom: 10px;
+            border: 1px solid #f1f1f1;
+        }
+        .item-row span { flex: 1; font-weight: 400; }
+        .delete-btn { color: #ff7675; cursor: pointer; background: none; border: none; font-size: 20px; }
+
+        .reload-btn {
+            width: 100%; padding: 15px; background: var(--primary); color: white; 
+            border: none; border-radius: 12px; cursor: pointer; font-weight: 700; margin-top: 20px;
+        }
+
+        @media (max-width: 800px) {
+            .dashboard { grid-template-columns: 1fr; }
+            #drawer { width: 100%; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+    <div class="dashboard">
+        <div class="glass-card">
+            <h1>MOJ<br>PLANER</h1>
+            <div class="nav-grid">
+                <div class="nav-item" onclick="openDrawer('dnevni')">Dnevni</div>
+                <div class="nav-item" onclick="openDrawer('sedmicni')">Sedmični</div>
+                <div class="nav-item" onclick="openDrawer('mjesecni')">Mjesečni</div>
+                <div class="nav-item" onclick="openDrawer('godisnji')">Godišnji</div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="cal-header">
+                <button onclick="changeMonth(-1)" style="border:none; background:none; font-size:20px; cursor:pointer;">❮</button>
+                <div>
+                    <div id="calYear" style="font-size: 0.8rem; font-weight: 700; color: var(--accent);"></div>
+                    <h2 id="calMonth" style="margin:0; text-transform: uppercase; font-weight: 900; font-size: 1.3rem;"></h2>
+                </div>
+                <button onclick="changeMonth(1)" style="border:none; background:none; font-size:20px; cursor:pointer;">❯</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+        </div>
+    </div>
+
+    <div id="drawer">
+        <span onclick="closeDrawer()" style="float:right; cursor:pointer; font-size:35px; color:#ccc;">&times;</span>
+        <h2 id="drawerTitle" style="font-weight: 900; text-transform: uppercase; margin-bottom: 30px; border-bottom: 4px solid var(--accent); display: inline-block;"></h2>
+        
+        <div class="input-group" style="margin-top:20px;">
+            <input type="text" id="userInput" placeholder="Šta planiraš?">
+            <button class="add-btn" onclick="saveItem()">+</button>
+        </div>
+
+        <div id="itemList" style="max-height: 60vh; overflow-y: auto;"></div>
+        <button id="reloadBtn" style="display:none;" class="reload-btn" onclick="resetDay()">RELOAD (Novi Dan)</button>
+    </div>
+
+    <script>
+        let date = new Date();
+        let currentMode = '';
+        let selectedKey = '';
+        let storage = JSON.parse(localStorage.getItem('gold_zen_v13')) || {
+            planer: { dnevni: [], sedmicni: [], mjesecni: [], godisnji: [] },
+            calendar: {} 
+        };
+
+        const mjeseci = ["Januar", "Februar", "Mart", "April", "Maj", "Juni", "Juli", "August", "Septembar", "Oktobar", "Novembar", "Decembar"];
+
+        function initCal() {
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+            const m = date.getMonth();
+            const y = date.getFullYear();
+            
+            document.getElementById('calMonth').innerText = mjeseci[m];
+            document.getElementById('calYear').innerText = y;
+
+            const days = new Date(y, m + 1, 0).getDate();
+            const start = (new Date(y, m, 1).getDay() || 7) - 1;
+
+            ['P', 'U', 'S', 'Č', 'P', 'S', 'N'].forEach(d => grid.innerHTML += `<div style="font-weight:900; font-size:11px; color:#bbb; padding-bottom:10px;">${d}</div>`);
+            for (let i = 0; i < start; i++) grid.innerHTML += `<div></div>`;
+            for (let i = 1; i <= days; i++) {
+                const key = `${y}-${m + 1}-${i}`;
+                const today = i === new Date().getDate() && m === new Date().getMonth() && y === new Date().getFullYear();
+                const has = storage.calendar[key] && storage.calendar[key].length > 0;
+                grid.innerHTML += `<div class="cal-day ${today?'today':''} ${has?'has-event':''}" onclick="openDrawer('cal-${key}')">${i}</div>`;
+            }
+        }
+
+        function changeMonth(dir) { date.setMonth(date.getMonth() + dir); initCal(); }
+
+        function openDrawer(mode) {
+            currentMode = mode.startsWith('cal') ? 'calendar' : 'planer';
+            selectedKey = mode.startsWith('cal') ? mode.replace('cal-', '') : mode;
+            
+            document.getElementById('drawerTitle').innerText = mode.startsWith('cal') ? "Datum: " + selectedKey : selectedKey;
+            document.getElementById('drawer').classList.add('active');
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('reloadBtn').style.display = selectedKey === 'dnevni' ? 'block' : 'none';
+            render();
+        }
+
+        function closeDrawer() { 
+            document.getElementById('drawer').classList.remove('active'); 
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function saveItem() {
+            const val = document.getElementById('userInput').value.trim();
+            if(!val) return;
+            if(currentMode === 'planer') storage.planer[selectedKey].push({text: val, done: false});
+            else { if(!storage.calendar[selectedKey]) storage.calendar[selectedKey] = []; storage.calendar[selectedKey].push(val); }
+            document.getElementById('userInput').value = '';
+            save();
+        }
+
+        function toggle(i) { if(currentMode === 'planer') { storage.planer[selectedKey][i].done = !storage.planer[selectedKey][i].done; save(); } }
+        function del(i) { if(currentMode === 'planer') storage.planer[selectedKey].splice(i, 1); else storage.calendar[selectedKey].splice(i, 1); save(); }
+        function resetDay() { storage.planer.dnevni.forEach(t => t.done = false); save(); }
+        function save() { localStorage.setItem('gold_zen_v13', JSON.stringify(storage)); render(); initCal(); }
+
+        function render() {
+            const list = document.getElementById('itemList');
+            list.innerHTML = '';
+            const items = currentMode === 'planer' ? storage.planer[selectedKey] : (storage.calendar[selectedKey] || []);
+            items.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.className = 'item-row';
+                if(currentMode === 'planer') {
+                    div.innerHTML = `<input type="checkbox" ${item.done?'checked':''} onchange="toggle(${i})" style="width:22px;height:22px;accent-color:var(--accent);"> <span style="${item.done?'text-decoration:line-through;color:#aaa':''}">${item.text}</span> <button class="delete-btn" onclick="del(${i})">✕</button>`;
+                } else {
+                    div.innerHTML = `<span>• ${item}</span> <button class="delete-btn" onclick="del(${i})">✕</button>`;
+                }
+                list.appendChild(div);
+            });
+        }
+
+        initCal();
+        document.getElementById('userInput').addEventListener('keypress', e => { if(e.key === 'Enter') saveItem(); });
+    </script>
+</body>
+</html>
